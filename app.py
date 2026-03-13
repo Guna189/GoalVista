@@ -291,24 +291,27 @@ def weekly_tasks_page():
             "Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"
         ])
 
-    edited = st.data_editor(
-    df,
-    num_rows="dynamic",
-    use_container_width=True,
-    hide_index=True,
-    key="weekly_editor",
-    column_order=None,
+    df = df[["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"]]
 
-    column_config={
-        "Task": st.column_config.TextColumn("Task", width="medium"),
-        "Mon": st.column_config.CheckboxColumn("Mon", width="small"),
-        "Tue": st.column_config.CheckboxColumn("Tue", width="small"),
-        "Wed": st.column_config.CheckboxColumn("Wed", width="small"),
-        "Thu": st.column_config.CheckboxColumn("Thu", width="small"),
-        "Fri": st.column_config.CheckboxColumn("Fri", width="small"),
-        "Sat": st.column_config.CheckboxColumn("Sat", width="small"),
-        "Sun": st.column_config.CheckboxColumn("Sun", width="small"),
-    },
+    edited = st.data_editor(
+        df,
+        num_rows="dynamic",
+        use_container_width=True,
+        hide_index=True,
+        key="weekly_editor",
+    
+        column_config={
+            "Task": st.column_config.TextColumn("Task"),
+            "Mon": st.column_config.CheckboxColumn("Mon"),
+            "Tue": st.column_config.CheckboxColumn("Tue"),
+            "Wed": st.column_config.CheckboxColumn("Wed"),
+            "Thu": st.column_config.CheckboxColumn("Thu"),
+            "Fri": st.column_config.CheckboxColumn("Fri"),
+            "Sat": st.column_config.CheckboxColumn("Sat"),
+            "Sun": st.column_config.CheckboxColumn("Sun"),
+        },
+    
+        column_order=None   # 🔒 locks column order
     )
 
     if st.button("Save Weekly Tasks"):
