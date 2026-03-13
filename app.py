@@ -291,7 +291,10 @@ def weekly_tasks_page():
             "Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"
         ])
 
-    edited = st.data_editor(df, num_rows="dynamic")
+    edited = st.data_editor(df, num_rows="dynamic",disabled=False, 
+        hide_index=True,  
+        key="weekly_editor",
+        column_order=None)
 
     if st.button("Save Weekly Tasks"):
 
