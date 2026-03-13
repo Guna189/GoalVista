@@ -469,7 +469,7 @@ def reports_page():
 # ==============================
 # MAIN APP
 # ==============================
-st.set_page_config(page_title="GoalVista", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="GoalVista", page_icon="assets/logo.png", layout="wide")
 st.sidebar.title("🎯 GoalVista")
 
 page = st.sidebar.radio("Navigation", ["Daily Tasks", "Weekly Tasks", "Calendar", "Reports"])
@@ -483,4 +483,5 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
