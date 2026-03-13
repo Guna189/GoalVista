@@ -4,16 +4,13 @@ import datetime
 import calendar
 import plotly.express as px
 import os
-
 from supabase import create_client
-from dotenv import load_dotenv
 
 # ==============================
 # CONFIG
 # ==============================
-load_dotenv()
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = "https://jkhiifxrcykqkfwyqbcn.supabase.co"
+SUPABASE_KEY = "sb_publishable_JNCq_i2OBZl-j_H1p96R4Q_sHdhzXUo"
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 DAILY_TABLE = "goalvista_daily_tasks"
@@ -479,4 +476,5 @@ elif page == "Weekly Tasks":
 elif page == "Calendar":
     calendar_page()
 elif page == "Reports":
+
     reports_page()
