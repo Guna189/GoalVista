@@ -298,11 +298,15 @@ def weekly_tasks_page():
     hide_index=True,
     key="weekly_editor",
 
-    # LOCK COLUMN ORDER
+    # Force fixed order
     column_order=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
 
+    # Column configuration
     column_config={
-        "Task": st.column_config.TextColumn("Task"),
+        "Task": st.column_config.TextColumn(
+            "Task",
+            disabled=False
+        ),
         "Mon": st.column_config.CheckboxColumn("Mon"),
         "Tue": st.column_config.CheckboxColumn("Tue"),
         "Wed": st.column_config.CheckboxColumn("Wed"),
@@ -310,7 +314,11 @@ def weekly_tasks_page():
         "Fri": st.column_config.CheckboxColumn("Fri"),
         "Sat": st.column_config.CheckboxColumn("Sat"),
         "Sun": st.column_config.CheckboxColumn("Sun"),
-    }
+    },
+
+    # Prevent column edits
+    disabled=[],
+
     )
 
     if st.button("Save Weekly Tasks"):
