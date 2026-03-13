@@ -287,13 +287,21 @@ def reports_page():
         # ----------------------------
         fig1 = px.pie(df, names=df["completed"].map({True: "Completed", False: "Not Completed"}), 
                       title="Task Completion Status")
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 2: Completion Bar
         # ----------------------------
         fig2 = px.bar(df, x="task", y="completed", title="Task Completion (1=Done, 0=Not Done)")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 3: Count Metrics
@@ -312,14 +320,22 @@ def reports_page():
         df_cum = df.copy()
         df_cum["cumulative"] = df_cum["completed"].cumsum()
         fig4 = px.line(df_cum, x=df_cum.index, y="cumulative", title="Cumulative Completed Tasks")
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 5: Completed vs Not Completed Summary
         # ----------------------------
         fig5 = px.histogram(df, x="completed", color="completed", 
                             title="Completed vs Not Completed Distribution", text_auto=True)
-        st.plotly_chart(fig5, use_container_width=True)
+        st.plotly_chart(fig5, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
     elif report_type == "Weekly":
         # ----------------------------
@@ -489,6 +505,7 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
 
