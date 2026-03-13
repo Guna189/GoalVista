@@ -299,8 +299,6 @@ def weekly_tasks_page():
     key="weekly_editor",
     column_order=None,
 
-    column_order=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
-
     column_config={
         "Task": st.column_config.TextColumn("Task", width="medium"),
         "Mon": st.column_config.CheckboxColumn("Mon", width="small"),
