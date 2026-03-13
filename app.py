@@ -366,7 +366,11 @@ def reports_page():
         # Visual 1: Total Completion per Task
         # ----------------------------
         fig1 = px.bar(df, x="Task", y="total_completed", title="Total Completion per Task")
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 2: Day-wise Completion
@@ -374,7 +378,11 @@ def reports_page():
         day_sum = df[["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]].sum().reset_index()
         day_sum.columns = ["Day","Completed"]
         fig2 = px.bar(day_sum, x="Day", y="Completed", title="Completion per Day")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 3: Task Completion Heatmap
@@ -383,7 +391,11 @@ def reports_page():
                          labels=dict(x="Day", y="Task", color="Done"),
                          x=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
                          y=df["Task"])
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 4: Completion Distribution Pie
@@ -392,7 +404,11 @@ def reports_page():
         total_possible = df[["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]].size
         fig4 = px.pie(values=[total_done, total_possible-total_done],
                       names=["Completed","Not Completed"], title="Overall Completion Distribution")
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 5: Average Completion per Task
@@ -406,13 +422,21 @@ def reports_page():
         df_cum = df.copy()
         df_cum["cumulative"] = df_cum["total_completed"].cumsum()
         fig6 = px.line(df_cum, x=df_cum.index, y="cumulative", title="Cumulative Task Completion Trend")
-        st.plotly_chart(fig6, use_container_width=True)
+        st.plotly_chart(fig6, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 7: Task Completion Histogram
         # ----------------------------
         fig7 = px.histogram(df, x="total_completed", nbins=7, title="Tasks by Completion Count")
-        st.plotly_chart(fig7, use_container_width=True)
+        st.plotly_chart(fig7, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
     elif report_type == "Monthly":
         # ----------------------------
@@ -446,20 +470,32 @@ def reports_page():
         # ----------------------------
         fig1 = px.line(df_group, x="task_date", y=["completed","not_completed"], 
                        title="Daily Completed vs Not Completed Tasks", markers=True)
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 2: Total Tasks per Day (Bar)
         # ----------------------------
         fig2 = px.bar(df_group, x="task_date", y="total_tasks", title="Total Tasks per Day")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 3: Completion Percentage per Day
         # ----------------------------
         df_group["completion_percent"] = (df_group["completed"]/df_group["total_tasks"])*100
         fig3 = px.line(df_group, x="task_date", y="completion_percent", title="Daily Completion %", markers=True)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 4: Completed vs Not Completed Pie
@@ -467,20 +503,32 @@ def reports_page():
         total_done = df_group["completed"].sum()
         total_not_done = df_group["not_completed"].sum()
         fig4 = px.pie(values=[total_done, total_not_done], names=["Completed","Not Completed"], title="Overall Completion Distribution")
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 5: Cumulative Completed Tasks
         # ----------------------------
         df_group["cumulative_done"] = df_group["completed"].cumsum()
         fig5 = px.line(df_group, x="task_date", y="cumulative_done", title="Cumulative Completed Tasks", markers=True)
-        st.plotly_chart(fig5, use_container_width=True)
+        st.plotly_chart(fig5, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 6: Histogram of Completed Tasks
         # ----------------------------
         fig6 = px.histogram(df_group, x="completed", nbins=10, title="Daily Completed Tasks Distribution")
-        st.plotly_chart(fig6, use_container_width=True)
+        st.plotly_chart(fig6, use_container_width=True, config={
+        "staticPlot": True,   # disables zoom, pan, and toolbars
+        "displayModeBar": False,  # hides the mode bar completely
+        "scrollZoom": False,      # disables scroll zoom
+        })
 
         # ----------------------------
         # Visual 7: Average Completion Metric
@@ -505,6 +553,7 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
 
