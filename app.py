@@ -297,14 +297,12 @@ def weekly_tasks_page():
     use_container_width=True,
     hide_index=True,
     key="weekly_editor",
+    column_order=None,
 
     column_order=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
 
     column_config={
-        "Task": st.column_config.TextColumn(
-            "Task",
-            width="large"
-        ),
+        "Task": st.column_config.TextColumn("Task", width="medium"),
         "Mon": st.column_config.CheckboxColumn("Mon", width="small"),
         "Tue": st.column_config.CheckboxColumn("Tue", width="small"),
         "Wed": st.column_config.CheckboxColumn("Wed", width="small"),
