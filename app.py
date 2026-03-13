@@ -374,32 +374,289 @@ def calendar_page():
                     save_calendar_note(date, note)
                     st.success("Saved")
 
-# ==============================
-# REPORTS
-# ==============================
 
 def reports_page():
 
-    st.title("Reports")
+    st.title("📊 Reports")
 
-    rows = supabase.table(DAILY_TABLE).select("*").execute().data
+    report_type = st.radio("Select Report Type", ["Daily", "Weekly", "Monthly"])
 
-    if not rows:
-        st.info("No data available")
-        return
+    static_config = {
+        "staticPlot": True,
+        "displayModeBar": False,
+        "scrollZoom": False
+    }
 
-    df = pd.DataFrame(rows)
+# ==========================
+# DAILY REPORTS
+# ==========================
 
-    df["completed"] = df["completed"].astype(bool)
+    if report_type == "Daily":
 
-    fig = px.pie(
-        df,
-        names=df["completed"].map({True:"Completed",False:"Not Completed"}),
-        title="Task Completion"
-    )
+        selected_date = st.date_input("Select Date", value=today())
 
-    st.plotly_chart(fig)
+        rows = supabase.table(DAILY_TABLE)\
+            .select("*")\
+            .eq("task_date", str(selected_date))\
+            .execute().data
 
+        if not rows:
+            st.info("No tasks for this day")
+            return
+
+        df = pd.DataFrame(rows)
+        df["completed"] = df["completed"].astype(bool)
+
+        st.subheader(f"Daily Analysis: {selected_date}")
+
+        # 1 Pie Chart
+        fig1 = px.pie(
+            df,
+            names=df["completed"].map({True:"Completed",False:"Not Completed"}),
+            title="Completion Ratio"
+        )
+        st.plotly_chart(fig1, use_container_width=True, config=static_config)
+
+        # 2 Bar chart
+        fig2 = px.bar(
+            df,
+            x="task",
+            y="completed",
+            title="Task Completion"
+        )
+        st.plotly_chart(fig2, use_container_width=True, config=static_config)
+
+        # 3 Histogram
+        fig3 = px.histogram(
+            df,
+            x="completed",
+            title="Completion Distribution"
+        )
+        st.plotly_chart(fig3, use_container_width=True, config=static_config)
+
+        # 4 Cumulative completion
+        df["cumulative"] = df["completed"].cumsum()
+
+        fig4 = px.line(
+            df,
+            x=df.index,
+            y="cumulative",
+            title="Cumulative Completed Tasks"
+        )
+        st.plotly_chart(fig4, use_container_width=True, config=static_config)
+
+        # 5 Metrics
+        total = len(df)
+        done = df["completed"].sum()
+        not_done = total - done
+
+        c1,c2,c3 = st.columns(3)
+        c1.metric("Total Tasks", total)
+        c2.metric("Completed", done)
+        c3.metric("Not Completed", not_done)
+
+# ==========================
+# WEEKLY REPORTS
+# ==========================
+
+    elif report_type == "Weekly":
+
+        year = st.number_input("Year", value=today().year)
+        week_no = st.number_input(
+            "Week Number",
+            min_value=1,
+            max_value=53,
+            value=today().isocalendar()[1]
+        )
+
+        week_start_date = datetime.date.fromisocalendar(year, week_no, 1)
+
+        rows = supabase.table(WEEKLY_TABLE)\
+            .select("*")\
+            .eq("week_start", str(week_start_date))\
+            .execute().data
+
+        if not rows:
+            st.info("No weekly tasks")
+            return
+
+        df = pd.DataFrame(rows)
+
+        df = df.rename(columns={
+            "task_name":"Task",
+            "mon":"Mon","tue":"Tue","wed":"Wed",
+            "thu":"Thu","fri":"Fri","sat":"Sat","sun":"Sun"
+        })
+
+        df["total_completed"] = df[
+            ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        ].sum(axis=1)
+
+        st.subheader(f"Week {week_no} Analysis")
+
+        # 1 Task completion bar
+        fig1 = px.bar(
+            df,
+            x="Task",
+            y="total_completed",
+            title="Completion per Task"
+        )
+        st.plotly_chart(fig1, use_container_width=True, config=static_config)
+
+        # 2 Day wise completion
+        day_sum = df[
+            ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        ].sum().reset_index()
+
+        day_sum.columns=["Day","Completed"]
+
+        fig2 = px.bar(
+            day_sum,
+            x="Day",
+            y="Completed",
+            title="Completion per Day"
+        )
+        st.plotly_chart(fig2, use_container_width=True, config=static_config)
+
+        # 3 Heatmap
+        fig3 = px.imshow(
+            df[["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]],
+            x=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+            y=df["Task"],
+            title="Habit Heatmap"
+        )
+        st.plotly_chart(fig3, use_container_width=True, config=static_config)
+
+        # 4 Pie distribution
+        total_done = df[
+            ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        ].sum().sum()
+
+        total_possible = df[
+            ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        ].size
+
+        fig4 = px.pie(
+            values=[total_done,total_possible-total_done],
+            names=["Completed","Not Completed"],
+            title="Weekly Completion Ratio"
+        )
+        st.plotly_chart(fig4, use_container_width=True, config=static_config)
+
+        # 5 Histogram
+        fig5 = px.histogram(
+            df,
+            x="total_completed",
+            nbins=7,
+            title="Tasks by Completion Count"
+        )
+        st.plotly_chart(fig5, use_container_width=True, config=static_config)
+
+# ==========================
+# MONTHLY REPORTS
+# ==========================
+
+    elif report_type == "Monthly":
+
+        year = st.number_input("Year", value=today().year)
+        month = st.selectbox(
+            "Month",
+            list(range(1,13)),
+            index=today().month-1
+        )
+
+        start_date = datetime.date(year,month,1)
+        end_day = calendar.monthrange(year,month)[1]
+        end_date = datetime.date(year,month,end_day)
+
+        rows = supabase.table(DAILY_TABLE)\
+            .select("*")\
+            .gte("task_date", str(start_date))\
+            .lte("task_date", str(end_date))\
+            .execute().data
+
+        if not rows:
+            st.info("No tasks this month")
+            return
+
+        df = pd.DataFrame(rows)
+        df["completed"] = df["completed"].astype(bool)
+
+        df_group = df.groupby("task_date").agg(
+            total_tasks=('task','count'),
+            completed=('completed','sum')
+        ).reset_index()
+
+        df_group["not_completed"] = (
+            df_group["total_tasks"] - df_group["completed"]
+        )
+
+        # 1 line comparison
+        fig1 = px.line(
+            df_group,
+            x="task_date",
+            y=["completed","not_completed"],
+            title="Completed vs Not Completed"
+        )
+        st.plotly_chart(fig1, use_container_width=True, config=static_config)
+
+        # 2 total tasks bar
+        fig2 = px.bar(
+            df_group,
+            x="task_date",
+            y="total_tasks",
+            title="Total Tasks per Day"
+        )
+        st.plotly_chart(fig2, use_container_width=True, config=static_config)
+
+        # 3 completion %
+        df_group["completion_percent"] = (
+            df_group["completed"] /
+            df_group["total_tasks"] * 100
+        )
+
+        fig3 = px.line(
+            df_group,
+            x="task_date",
+            y="completion_percent",
+            title="Daily Completion %"
+        )
+        st.plotly_chart(fig3, use_container_width=True, config=static_config)
+
+        # 4 pie
+        fig4 = px.pie(
+            values=[
+                df_group["completed"].sum(),
+                df_group["not_completed"].sum()
+            ],
+            names=["Completed","Not Completed"],
+            title="Monthly Completion Ratio"
+        )
+        st.plotly_chart(fig4, use_container_width=True, config=static_config)
+
+        # 5 histogram
+        fig5 = px.histogram(
+            df_group,
+            x="completed",
+            nbins=10,
+            title="Daily Completed Tasks Distribution"
+        )
+        st.plotly_chart(fig5, use_container_width=True, config=static_config)
+
+        # 6 cumulative
+        df_group["cumulative"] = df_group["completed"].cumsum()
+
+        fig6 = px.line(
+            df_group,
+            x="task_date",
+            y="cumulative",
+            title="Cumulative Completed Tasks"
+        )
+        st.plotly_chart(fig6, use_container_width=True, config=static_config)
+
+        # 7 metric
+        avg = df_group["completion_percent"].mean()
+        st.metric("Average Daily Completion %", round(avg,2))
 # ==============================
 # APP CONFIG
 # ==============================
