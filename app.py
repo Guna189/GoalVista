@@ -174,7 +174,6 @@ def weekly_tasks_page():
     hide_index=True,  
     key="weekly_editor",
     column_order=None, 
-    row_order=False  
     )
 
     if st.button("💾 Save Weekly Tasks"):
@@ -552,6 +551,7 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
 
