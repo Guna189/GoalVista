@@ -130,61 +130,66 @@ def daily_tasks_page():
 def weekly_tasks_page():
     st.title("✅ Weekly Habit Tracker")
 
+    # ----------------------
+    # Week Picker
+    # ----------------------
     year = st.number_input("Year", value=today().year, step=1)
     week_no = st.number_input("Week Number", min_value=1, max_value=53, value=today().isocalendar()[1], step=1)
-    selected_date = datetime.date.fromisocalendar(year, week_no, 1)  # Monday of the week
+    week_start_date = datetime.date.fromisocalendar(year, week_no, 1)  # Monday of selected week
 
-    rows = get_weekly_tasks_for_date(selected_date)
+    # Fetch weekly tasks for this week
+    rows = supabase.table(WEEKLY_TABLE).select("*") \
+        .eq("week_start", str(week_start_date)).execute().data
+
     df = pd.DataFrame(rows)
-
     if not df.empty:
         df = df.rename(columns={
             "task_name":"Task","mon":"Mon","tue":"Tue","wed":"Wed",
             "thu":"Thu","fri":"Fri","sat":"Sat","sun":"Sun"
         })
+        # Drop DB metadata
         df = df.drop(columns=[c for c in ["id","week_start","created_on","created_at"] if c in df.columns])
     else:
         df = pd.DataFrame(columns=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
 
+    # Ensure boolean
     for col in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]:
         if col not in df: df[col] = False
         df[col] = df[col].fillna(False).astype(bool)
 
-    edited = st.data_editor(df,
+    edited = st.data_editor(
+        df,
         num_rows="dynamic",
         use_container_width=True,
-        column_config={col: st.column_config.CheckboxColumn(col) for col in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]}
+        column_config={
+            "Mon": st.column_config.CheckboxColumn("Mon"),
+            "Tue": st.column_config.CheckboxColumn("Tue"),
+            "Wed": st.column_config.CheckboxColumn("Wed"),
+            "Thu": st.column_config.CheckboxColumn("Thu"),
+            "Fri": st.column_config.CheckboxColumn("Fri"),
+            "Sat": st.column_config.CheckboxColumn("Sat"),
+            "Sun": st.column_config.CheckboxColumn("Sun"),
+        }
     )
 
-    c1, c2 = st.columns(2)
-    if c1.button("💾 Save Weekly Tasks"):
-        save_weekly_tasks(edited.to_dict("records"), selected_date)
+    if st.button("💾 Save Weekly Tasks"):
+        # Save updated tasks
+        # First delete old data for this week
+        supabase.table(WEEKLY_TABLE).delete().eq("week_start", str(week_start_date)).execute()
+        for r in edited.to_dict("records"):
+            data = {
+                "week_start": str(week_start_date),
+                "task_name": r["Task"],
+                "mon": bool(r.get("Mon", False)),
+                "tue": bool(r.get("Tue", False)),
+                "wed": bool(r.get("Wed", False)),
+                "thu": bool(r.get("Thu", False)),
+                "fri": bool(r.get("Fri", False)),
+                "sat": bool(r.get("Sat", False)),
+                "sun": bool(r.get("Sun", False)),
+            }
+            supabase.table(WEEKLY_TABLE).insert(data).execute()
         st.success("Saved Successfully")
-
-    if c2.button("📋 Copy Previous Week"):
-        prev_week_start = week_start_date - datetime.timedelta(days=7)
-        prev_rows = supabase.table(WEEKLY_TABLE).select("*").eq("week_start", str(prev_week_start)).execute().data
-        if not prev_rows:
-            st.info("No data from previous week to copy.")
-        else:
-            # Prepare dataframe
-            prev_df = pd.DataFrame(prev_rows)
-            prev_df = prev_df.rename(columns={
-                "task_name":"Task","mon":"Mon","tue":"Tue","wed":"Wed","thu":"Thu",
-                "fri":"Fri","sat":"Sat","sun":"Sun"
-            })
-            # Drop DB metadata columns
-            prev_df = prev_df.drop(columns=[c for c in ["id","week_start","created_on","created_at"] if c in prev_df.columns])
-            for col in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]:
-                prev_df[col] = prev_df[col].fillna(False).astype(bool)
-
-            # Save copied tasks into current week
-            save_weekly_tasks(prev_df.to_dict("records"))
-            st.success("Copied previous week tasks!")
-            st.rerun()
-    else:
-        st.info("No previous week data")
-
 # ==============================
 # CALENDAR PAGE
 # ==============================
@@ -478,3 +483,4 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
