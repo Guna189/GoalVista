@@ -297,6 +297,7 @@ def weekly_tasks_page():
     use_container_width=True,
     hide_index=True,
     key="weekly_editor",
+    disabled=False,
 
     # Force fixed order
     column_order=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
@@ -316,8 +317,6 @@ def weekly_tasks_page():
         "Sun": st.column_config.CheckboxColumn("Sun"),
     },
 
-    # Prevent column edits
-    disabled=[],
 
     )
 
