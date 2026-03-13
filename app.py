@@ -3,10 +3,11 @@ import pandas as pd
 import datetime
 import calendar
 import plotly.express as px
+import bcrypt
 from supabase import create_client
 
 # ==============================
-# CONFIG
+# SUPABASE CONFIG
 # ==============================
 
 SUPABASE_URL = "https://jkhiifxrcykqkfwyqbcn.supabase.co"
@@ -26,32 +27,60 @@ USERS_TABLE = "goalvista_users"
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ==============================
-# UTILITIES
-# ==============================
+if "page" not in st.session_state:
+    st.session_state.page = "login"
 
-def today():
-    return datetime.date.today()
-
-def week_start(date=today()):
-    return date - datetime.timedelta(days=date.weekday())
+if "username" not in st.session_state:
+    st.session_state.username = None
 
 # ==============================
-# AUTHENTICATION
+# PASSWORD FUNCTIONS
 # ==============================
+
+def hash_password(password):
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode(), salt)
+    return hashed.decode()
+
+def verify_password(password, hashed):
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+# ==============================
+# USER FUNCTIONS
+# ==============================
+
+def register_user(username, password):
+
+    hashed = hash_password(password)
+
+    try:
+        supabase.table(USERS_TABLE).insert({
+            "username": username,
+            "password_hash": hashed
+        }).execute()
+
+        return True
+    except:
+        return False
+
 
 def authenticate_user(username, password):
 
     res = supabase.table(USERS_TABLE)\
         .select("*")\
         .eq("username", username)\
-        .eq("password", password)\
         .execute()
 
-    if res.data:
-        return True
-    return False
+    if not res.data:
+        return False
 
+    user = res.data[0]
+
+    return verify_password(password, user["password_hash"])
+
+# ==============================
+# LOGIN PAGE
+# ==============================
 
 def login_page():
 
@@ -65,17 +94,76 @@ def login_page():
         if authenticate_user(username, password):
 
             st.session_state.logged_in = True
+            st.session_state.username = username
+
             st.success("Login Successful")
             st.rerun()
 
         else:
             st.error("Invalid Username or Password")
 
+    st.divider()
+
+    if st.button("Create New Account"):
+
+        st.session_state.page = "register"
+        st.rerun()
+
+# ==============================
+# REGISTER PAGE
+# ==============================
+
+def register_page():
+
+    st.title("📝 Create Account")
+
+    username = st.text_input("Choose Username")
+    password = st.text_input("Password", type="password")
+    confirm = st.text_input("Confirm Password", type="password")
+
+    if st.button("Register"):
+
+        if not username or not password:
+            st.warning("Fill all fields")
+            return
+
+        if password != confirm:
+            st.error("Passwords do not match")
+            return
+
+        success = register_user(username, password)
+
+        if success:
+
+            st.success("Account Created Successfully")
+            st.session_state.page = "login"
+            st.rerun()
+
+        else:
+
+            st.error("Username already exists")
+
+    if st.button("Back to Login"):
+
+        st.session_state.page = "login"
+        st.rerun()
+
+# ==============================
+# UTILITIES
+# ==============================
+
+def today():
+    return datetime.date.today()
+
+def week_start(date=today()):
+    return date - datetime.timedelta(days=date.weekday())
+
 # ==============================
 # DAILY TASKS
 # ==============================
 
 def create_task(task, task_date):
+
     supabase.table(DAILY_TABLE).insert({
         "task": task,
         "task_date": str(task_date),
@@ -83,14 +171,27 @@ def create_task(task, task_date):
     }).execute()
 
 def get_tasks_by_date(date):
-    res = supabase.table(DAILY_TABLE).select("*").eq("task_date", str(date)).execute()
+
+    res = supabase.table(DAILY_TABLE)\
+        .select("*")\
+        .eq("task_date", str(date))\
+        .execute()
+
     return res.data
 
 def update_task_status(task_id, status):
-    supabase.table(DAILY_TABLE).update({"completed": status}).eq("id", task_id).execute()
+
+    supabase.table(DAILY_TABLE)\
+        .update({"completed": status})\
+        .eq("id", task_id)\
+        .execute()
 
 def delete_task(task_id):
-    supabase.table(DAILY_TABLE).delete().eq("id", task_id).execute()
+
+    supabase.table(DAILY_TABLE)\
+        .delete()\
+        .eq("id", task_id)\
+        .execute()
 
 # ==============================
 # DAILY TASK PAGE
@@ -101,6 +202,7 @@ def daily_tasks_page():
     st.title("📝 Daily Tasks")
 
     selected_date = st.date_input("Select Date", value=today())
+
     tasks = get_tasks_by_date(selected_date)
 
     df = pd.DataFrame(tasks)
@@ -116,17 +218,17 @@ def daily_tasks_page():
 
         c1.metric("Total Tasks", total)
         c2.metric("Completed", completed)
-        c3.metric("Completion %", round((completed/total)*100, 1))
+        c3.metric("Completion %", round((completed/total)*100,1))
 
     st.divider()
 
     new_task = st.text_input("Add Task")
 
-    if st.button("➕ Add Task"):
+    if st.button("Add Task"):
 
         if new_task:
+
             create_task(new_task, selected_date)
-            st.success("Task Added")
             st.rerun()
 
     st.divider()
@@ -145,7 +247,7 @@ def daily_tasks_page():
             update_task_status(task["id"], status)
             st.rerun()
 
-        if col2.button("🗑", key=f"del{task['id']}"):
+        if col2.button("Delete", key=f"del{task['id']}"):
             delete_task(task["id"])
             st.rerun()
 
@@ -155,9 +257,9 @@ def daily_tasks_page():
 
 def weekly_tasks_page():
 
-    st.title("✅ Weekly Habit Tracker")
+    st.title("Weekly Habit Tracker")
 
-    year = st.number_input("Year", value=today().year, step=1)
+    year = st.number_input("Year", value=today().year)
 
     week_no = st.number_input(
         "Week Number",
@@ -183,32 +285,15 @@ def weekly_tasks_page():
             "thu":"Thu","fri":"Fri","sat":"Sat","sun":"Sun"
         })
 
-        df = df.drop(columns=[
-            c for c in ["id","week_start","created_on","created_at"]
-            if c in df.columns
-        ])
-
     else:
 
         df = pd.DataFrame(columns=[
             "Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"
         ])
 
-    for col in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]:
+    edited = st.data_editor(df, num_rows="dynamic")
 
-        if col not in df:
-            df[col] = False
-
-        df[col] = df[col].fillna(False).astype(bool)
-
-    edited = st.data_editor(
-        df,
-        num_rows="dynamic",
-        use_container_width=True,
-        hide_index=True
-    )
-
-    if st.button("💾 Save Weekly Tasks"):
+    if st.button("Save Weekly Tasks"):
 
         supabase.table(WEEKLY_TABLE)\
             .delete()\
@@ -231,10 +316,10 @@ def weekly_tasks_page():
 
             supabase.table(WEEKLY_TABLE).insert(data).execute()
 
-        st.success("Saved Successfully")
+        st.success("Saved")
 
 # ==============================
-# CALENDAR NOTES
+# CALENDAR PAGE
 # ==============================
 
 def save_calendar_note(date, note):
@@ -247,12 +332,13 @@ def save_calendar_note(date, note):
 def get_calendar_notes():
 
     res = supabase.table(CAL_TABLE).select("*").execute()
+
     return res.data
 
 
 def calendar_page():
 
-    st.title("📅 Calendar Notes")
+    st.title("Calendar Notes")
 
     year = st.number_input("Year", value=today().year)
     month = st.selectbox("Month", list(range(1,13)), index=today().month-1)
@@ -294,7 +380,7 @@ def calendar_page():
 
 def reports_page():
 
-    st.title("📊 Reports")
+    st.title("Reports")
 
     rows = supabase.table(DAILY_TABLE).select("*").execute().data
 
@@ -315,31 +401,46 @@ def reports_page():
     st.plotly_chart(fig)
 
 # ==============================
-# MAIN APP
+# APP CONFIG
 # ==============================
 
-st.set_page_config(
-    page_title="GoalVista",
-    page_icon="🎯",
-    layout="centered"
-)
+st.set_page_config(page_title="GoalVista", page_icon="🎯")
+
+# ==============================
+# AUTH FLOW
+# ==============================
 
 if not st.session_state.logged_in:
 
-    login_page()
+    if st.session_state.page == "login":
+        login_page()
+
+    elif st.session_state.page == "register":
+        register_page()
+
     st.stop()
 
+# ==============================
+# SIDEBAR
+# ==============================
+
 st.sidebar.title("🎯 GoalVista")
+st.sidebar.write(f"👤 {st.session_state.username}")
 
 if st.sidebar.button("Logout"):
 
     st.session_state.logged_in = False
+    st.session_state.page = "login"
     st.rerun()
 
 page = st.sidebar.radio(
     "Navigation",
     ["Daily Tasks","Weekly Tasks","Calendar","Reports"]
 )
+
+# ==============================
+# ROUTER
+# ==============================
 
 if page == "Daily Tasks":
     daily_tasks_page()
