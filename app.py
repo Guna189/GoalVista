@@ -166,18 +166,16 @@ def weekly_tasks_page():
         df[col] = df[col].fillna(False).astype(bool)
 
     edited = st.data_editor(
-        df,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "Mon": st.column_config.CheckboxColumn("Mon"),
-            "Tue": st.column_config.CheckboxColumn("Tue"),
-            "Wed": st.column_config.CheckboxColumn("Wed"),
-            "Thu": st.column_config.CheckboxColumn("Thu"),
-            "Fri": st.column_config.CheckboxColumn("Fri"),
-            "Sat": st.column_config.CheckboxColumn("Sat"),
-            "Sun": st.column_config.CheckboxColumn("Sun"),
-        }
+    df,
+    num_rows="dynamic",
+    use_container_width=True,
+    column_config={col: st.column_config.CheckboxColumn(col) for col in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]},
+    disabled=False, 
+    hide_index=True,  
+    key="weekly_editor",
+    column_order=None, 
+    hide_columns=[],
+    row_order=False  
     )
 
     if st.button("💾 Save Weekly Tasks"):
@@ -491,6 +489,7 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
 
