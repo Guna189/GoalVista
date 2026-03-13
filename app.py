@@ -174,7 +174,6 @@ def weekly_tasks_page():
     hide_index=True,  
     key="weekly_editor",
     column_order=None, 
-    hide_columns=[],
     row_order=False  
     )
 
@@ -553,6 +552,7 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
 
