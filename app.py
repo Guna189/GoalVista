@@ -291,10 +291,27 @@ def weekly_tasks_page():
             "Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"
         ])
 
-    edited = st.data_editor(df, num_rows="dynamic",disabled=False, 
-        hide_index=True,  
-        key="weekly_editor",
-        column_order=None)
+    edited = st.data_editor(
+    df,
+    num_rows="dynamic",
+    use_container_width=True,
+    hide_index=True,
+    key="weekly_editor",
+
+    # LOCK COLUMN ORDER
+    column_order=["Task","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+
+    column_config={
+        "Task": st.column_config.TextColumn("Task"),
+        "Mon": st.column_config.CheckboxColumn("Mon"),
+        "Tue": st.column_config.CheckboxColumn("Tue"),
+        "Wed": st.column_config.CheckboxColumn("Wed"),
+        "Thu": st.column_config.CheckboxColumn("Thu"),
+        "Fri": st.column_config.CheckboxColumn("Fri"),
+        "Sat": st.column_config.CheckboxColumn("Sat"),
+        "Sun": st.column_config.CheckboxColumn("Sun"),
+    }
+    )
 
     if st.button("Save Weekly Tasks"):
 
