@@ -6,6 +6,14 @@ import plotly.express as px
 import os
 from supabase import create_client
 
+st.markdown(
+    """
+    <link rel="manifest" href="assets/manifest.json">
+    <link rel="apple-touch-icon" href="AppIcons/android/mipmap-xxxhdpi/ic_launcher.png">
+    """,
+    unsafe_allow_html=True
+)
+
 # ==============================
 # CONFIG
 # ==============================
@@ -483,5 +491,6 @@ elif page == "Calendar":
 elif page == "Reports":
 
     reports_page()
+
 
 
